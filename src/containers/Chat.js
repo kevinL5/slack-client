@@ -1,8 +1,6 @@
 import React, { Component } from 'react'
 import socketIOClient from 'socket.io-client'
 
-let socket = null
-
 class Chat extends Component {
 	state = {
 		input: null,
@@ -10,14 +8,19 @@ class Chat extends Component {
 	}
 
 	componentWillMount() {
-		socket = socketIOClient(this.props.endpoint)
+		this.socket = socketIOClient('http://localhost:3001')
 	}
 
 	componentDidMount() {
-		socket.on('all messages', messages => {
+		if (!this.props.user) return this.props.history.push('/')
+
+		this.socket.emit('request messages', this.props.match.params.room)
+
+		this.socket.on('all messages', messages => {
+			console.log('MESSAGES', messages)
 			this.setState({ messages })
 		})
-		socket.on('update message', message => {
+		this.socket.on('update message', message => {
 			console.log('Nouveau message reçu', message)
 			this.updateMessages(message)
 		})
@@ -38,19 +41,21 @@ class Chat extends Component {
 	sendMessage = event => {
 		event.preventDefault()
 		console.log('Nouveau message envoyé', this.state.input)
-		socket.emit('new message', this.state.input)
+		this.socket.emit('new message', {
+			user: this.props.user,
+			text: this.state.input
+		})
 	}
 
 	render() {
 		console.log('render chat')
 		const { messages } = this.state
-
 		return (
 			<div>
 				Chat slack
 				{messages &&
 					messages.map((message, i) => {
-						return <div key={i}>{message}</div>
+						return <div key={i}>{`${message.user.name} : ${message.text}`}</div>
 					})}
 				<form onSubmit={event => this.sendMessage(event)}>
 					<input onChange={this.updateInput} />

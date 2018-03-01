@@ -1,16 +1,35 @@
 import React, { Component } from 'react'
+import { BrowserRouter as Router, Route } from 'react-router-dom'
+import Welcome from './containers/Welcome'
 import Chat from './containers/Chat'
 
 class App extends Component {
 	state = {
-		endpoint: 'http://localhost:3001'
+		user: null
+	}
+
+	updateUser = user => {
+		console.log('updateUser', user)
+		this.setState({ user })
 	}
 
 	render() {
 		return (
-			<div>
-				<Chat endpoint={this.state.endpoint} />
-			</div>
+			<Router>
+				<div>
+					<Route
+						exact
+						path="/"
+						render={props => (
+							<Welcome {...props} updateUser={this.updateUser} />
+						)}
+					/>
+					<Route
+						path="/chat/:room"
+						render={props => <Chat {...props} user={this.state.user} />}
+					/>
+				</div>
+			</Router>
 		)
 	}
 }
